@@ -59,7 +59,7 @@ final class ChecklistViewModel: ObservableObject {
         reminderService: ReminderService? = nil
     ) {
         self.defaults = defaults
-        self.reminderService = reminderService ?? ReminderService()
+        self.reminderService = reminderService ?? ReminderService(defaults: defaults)
 
         loadTasks()
         loadPreferences()

@@ -97,8 +97,8 @@ enum ReminderReason {
 }
 
 final class ReminderService {
-    private let notificationCenter = UNUserNotificationCenter.current()
-    private let defaults = UserDefaults.standard
+    private let notificationCenter: UNUserNotificationCenter
+    private let defaults: UserDefaults
     private let lastReminderKey = "lastStartupReminderDate"
     private let developerModeKey = "developerModeEnabled"
     private let reminderCooldownMinutesKey = "reminderCooldownMinutes"
@@ -107,6 +107,14 @@ final class ReminderService {
     private let reminderStyleKey = "reminderPresentationStyle"
     private let notificationTextSizeKey = "notificationTextSize"
     @MainActor private lazy var popupController = ReminderPopupController()
+
+    init(
+        defaults: UserDefaults = .standard,
+        notificationCenter: UNUserNotificationCenter = .current()
+    ) {
+        self.defaults = defaults
+        self.notificationCenter = notificationCenter
+    }
 
     func authorizationStatus() async -> UNAuthorizationStatus {
         await withCheckedContinuation { continuation in
