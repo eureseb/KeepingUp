@@ -78,15 +78,11 @@ final class ChecklistViewModel: ObservableObject {
     }
 
     func addTask() {
-        guard let newTask = try? TaskStore.appendTask(
-            title: newTaskTitle,
-            defaults: defaults,
-            postChangeNotification: false
-        ) else {
+        guard let title = try? TaskStore.validateTitle(newTaskTitle) else {
             return
         }
 
-        tasks.append(newTask)
+        tasks.append(StartupTask(title: title))
         newTaskTitle = ""
     }
 
