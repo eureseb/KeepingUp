@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ReminderPopupView: View {
     let tasks: [StartupTask]
+    let greeting: String
     let primaryMessage: String
     let secondaryMessage: String?
     let textSize: NotificationTextSize
@@ -22,14 +23,21 @@ struct ReminderPopupView: View {
         HStack(alignment: .top, spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 22, height: 22)
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .frame(width: 24, height: 24)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center, spacing: 8) {
+                    Text(greeting)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(secondaryTextColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(chipBackgroundColor, in: Capsule())
+
                     Text("KeepingUp")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                        .foregroundStyle(secondaryTextColor)
 
                     Spacer()
 
@@ -38,7 +46,7 @@ struct ReminderPopupView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(secondaryTextColor)
                             .frame(width: 16, height: 16)
                             .background(.white.opacity(0.001))
                     }
@@ -48,7 +56,7 @@ struct ReminderPopupView: View {
 
                 Text(primaryMessage)
                     .font(primaryFont)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(primaryTextColor)
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
@@ -60,35 +68,43 @@ struct ReminderPopupView: View {
                         HStack(alignment: .top, spacing: 6) {
                             Text(secondaryMessage)
                                 .font(secondaryFont)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(secondaryTextColor)
                                 .multilineTextAlignment(.leading)
                                 .lineLimit(2)
                                 .fixedSize(horizontal: false, vertical: true)
 
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(secondaryTextColor)
                                 .padding(.top, 2)
                                 .rotationEffect(.degrees(isExpanded ? 0 : 0))
                         }
                     }
                     .buttonStyle(.plain)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .help(isExpanded ? "Hide open task preview" : "Show open task preview")
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(Array(tasks.prefix(5))) { task in
-                        Text(task.title)
-                            .font(expandedListFont)
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
+                        Label {
+                            Text(task.title)
+                                .font(expandedListFont)
+                                .foregroundStyle(primaryTextColor)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } icon: {
+                            Circle()
+                                .fill(secondaryTextColor.opacity(0.6))
+                                .frame(width: 5, height: 5)
+                        }
+                        .labelStyle(.titleAndIcon)
                     }
 
                     if tasks.count > 5 {
                         Text("+ \(tasks.count - 5) more in menu bar")
                             .font(secondaryFont)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(secondaryTextColor)
                     }
                 }
                 .padding(.top, isExpanded ? 4 : 0)
@@ -98,10 +114,15 @@ struct ReminderPopupView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 11)
+        .padding(.vertical, 13)
         .frame(width: popupWidth, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(backgroundFill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(borderColor, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .onTapGesture {
             onDismiss()
         }
@@ -155,5 +176,32 @@ struct ReminderPopupView: View {
         case .large:
             return .body
         }
+    }
+
+    private var primaryTextColor: Color {
+        Color(nsColor: .labelColor)
+    }
+
+    private var secondaryTextColor: Color {
+        Color(nsColor: .secondaryLabelColor)
+    }
+
+    private var chipBackgroundColor: Color {
+        Color(nsColor: .separatorColor).opacity(0.12)
+    }
+
+    private var backgroundFill: some ShapeStyle {
+        LinearGradient(
+            colors: [
+                Color(nsColor: .windowBackgroundColor),
+                Color(nsColor: .controlBackgroundColor)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var borderColor: Color {
+        Color(nsColor: .separatorColor).opacity(0.35)
     }
 }

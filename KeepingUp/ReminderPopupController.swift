@@ -45,11 +45,12 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         isExpanded = false
         currentTextSize = textSize
 
-        let message = popupMessage(for: tasksToShow)
+        let message = ReminderMessageBuilder.build(for: tasksToShow)
         let reminderView = ReminderPopupView(
             tasks: tasksToShow,
-            primaryMessage: message.primary,
-            secondaryMessage: message.secondary,
+            greeting: message.greeting,
+            primaryMessage: message.primaryMessage,
+            secondaryMessage: message.secondaryMessage,
             textSize: textSize,
             onDismiss: { [weak self] in
                 self?.dismiss(reason: "tap")
@@ -117,10 +118,11 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         panel.isMovableByWindowBackground = true
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.delegate = self
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.wantsLayer = true
+        hostingView.layer?.masksToBounds = false
         panel.contentView = hostingView
         panel.setContentSize(targetPanelSize())
         lastAppliedPanelSize = targetPanelSize()
@@ -211,18 +213,6 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
             scheduleAutoDismiss(after: pendingAutoDismissSeconds)
             debugLog("timer resumed after collapse")
         }
-    }
-
-    private func popupMessage(for tasks: [StartupTask]) -> (primary: String, secondary: String?) {
-        if tasks.count == 1, let task = tasks.first {
-            return ("Good morning. Start with: \(task.title)", nil)
-        }
-
-        if let firstTask = tasks.first {
-            return ("Good morning. Start with: \(firstTask.title)", "You have \(tasks.count) tasks today.")
-        }
-
-        return ("Good morning", "Open the menu bar when you're ready.")
     }
 
     private func isDuplicateShowRequest() -> Bool {

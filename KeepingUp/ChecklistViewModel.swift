@@ -52,7 +52,6 @@ final class ChecklistViewModel: ObservableObject {
     private let defaults: UserDefaults
     private let reminderService: ReminderService
     private let distributedNotificationCenter = DistributedNotificationCenter.default()
-    private var tasksDidChangeObserver: NSObjectProtocol?
 
     init(
         defaults: UserDefaults = .standard,
@@ -200,15 +199,17 @@ final class ChecklistViewModel: ObservableObject {
     }
 
     private func observeExternalTaskChanges() {
-        tasksDidChangeObserver = distributedNotificationCenter.addObserver(
-            forName: TaskStore.tasksDidChangeNotificationName,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in
-                self?.loadTasks()
-            }
-        }
+        distributedNotificationCenter.addObserver(
+            self,
+            selector: #selector(handleExternalTaskChanges(_:)),
+            name: TaskStore.tasksDidChangeNotificationName,
+            object: nil
+        )
+    }
+
+    @objc
+    private func handleExternalTaskChanges(_ notification: Notification) {
+        loadTasks()
     }
 
     private func loadPreferences() {
@@ -305,8 +306,6 @@ final class ChecklistViewModel: ObservableObject {
     }
 
     deinit {
-        if let tasksDidChangeObserver {
-            distributedNotificationCenter.removeObserver(tasksDidChangeObserver)
-        }
+        distributedNotificationCenter.removeObserver(self)
     }
 }
