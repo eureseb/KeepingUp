@@ -185,10 +185,11 @@ final class ReminderService {
 
         let incompleteTasks = tasks.filter { !$0.isComplete }
         let tasksToMention = incompleteTasks.isEmpty ? tasks : incompleteTasks
+        let reminderMessage = ReminderMessageBuilder.build(for: tasksToMention)
 
         let content = UNMutableNotificationContent()
         content.title = "KeepingUp"
-        content.body = reminderBody(for: tasksToMention)
+        content.body = reminderMessage.notificationBody
         content.sound = .default
 
         let request = UNNotificationRequest(
@@ -208,21 +209,6 @@ final class ReminderService {
                 continuation.resume()
             }
         }
-    }
-
-    private func reminderBody(for tasks: [StartupTask]) -> String {
-        let preview = tasks.prefix(2).map(\.title).joined(separator: ", ")
-        let remainingCount = tasks.count
-
-        if preview.isEmpty {
-            return "Welcome back. Check today's list in the menu bar when you're ready."
-        }
-
-        if remainingCount <= 2 {
-            return "Welcome back. Today's focus: \(preview)."
-        }
-
-        return "Welcome back. Today's focus: \(preview), and \(remainingCount - 2) more."
     }
 
     private func shouldDeliverReminder(for reason: ReminderReason) -> Bool {

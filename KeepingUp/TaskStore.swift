@@ -19,38 +19,9 @@ enum TaskStoreError: LocalizedError {
 }
 
 enum TaskStore {
-    static let tasksStorageKey = "startupTasks"
+    static let legacyTasksStorageKey = "startupTasks"
     static let tasksDidChangeNotificationName = Notification.Name("eureseb.KeepingUp.tasksDidChange")
-
-    static func loadTasks(from defaults: UserDefaults = .standard) -> [StartupTask] {
-        guard let data = defaults.data(forKey: tasksStorageKey) else {
-            return []
-        }
-
-        do {
-            return try JSONDecoder().decode([StartupTask].self, from: data)
-        } catch {
-            return []
-        }
-    }
-
-    static func saveTasks(
-        _ tasks: [StartupTask],
-        to defaults: UserDefaults = .standard,
-        postChangeNotification: Bool
-    ) throws {
-        let data = try JSONEncoder().encode(tasks)
-        defaults.set(data, forKey: tasksStorageKey)
-
-        guard postChangeNotification else { return }
-
-        DistributedNotificationCenter.default().postNotificationName(
-            tasksDidChangeNotificationName,
-            object: nil,
-            userInfo: nil,
-            deliverImmediately: true
-        )
-    }
+    static let changeSourceIdentifierUserInfoKey = "sourceIdentifier"
 
     static func validateTitle(_ rawTitle: String) throws -> String {
         let trimmedTitle = rawTitle.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -59,19 +30,5 @@ enum TaskStore {
         }
 
         return trimmedTitle
-    }
-
-    @discardableResult
-    static func appendTask(
-        title rawTitle: String,
-        defaults: UserDefaults = .standard,
-        postChangeNotification: Bool = true
-    ) throws -> StartupTask {
-        let title = try validateTitle(rawTitle)
-        let newTask = StartupTask(title: title)
-        var tasks = loadTasks(from: defaults)
-        tasks.append(newTask)
-        try saveTasks(tasks, to: defaults, postChangeNotification: postChangeNotification)
-        return newTask
     }
 }

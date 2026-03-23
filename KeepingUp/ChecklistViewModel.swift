@@ -14,9 +14,7 @@ import UserNotifications
 /// The same instance is shared by the menu bar UI for the lifetime of the app.
 @MainActor
 final class ChecklistViewModel: ObservableObject {
-    @Published var tasks: [StartupTask] = [] {
-        didSet { saveTasks() }
-    }
+    @Published var tasks: [StartupTask] = []
     @Published var newTaskTitle: String = ""
     @Published var launchAtLoginEnabled = false
     @Published var startupReminderEnabled = false {
@@ -51,15 +49,18 @@ final class ChecklistViewModel: ObservableObject {
     private let popupAutoDismissSecondsKey = "popupAutoDismissSeconds"
     private let defaults: UserDefaults
     private let reminderService: ReminderService
+    private let taskRepository: TaskRepository
     private let distributedNotificationCenter = DistributedNotificationCenter.default()
     private var tasksDidChangeObserver: NSObjectProtocol?
 
     init(
         defaults: UserDefaults = .standard,
-        reminderService: ReminderService? = nil
+        reminderService: ReminderService? = nil,
+        taskRepository: TaskRepository? = nil
     ) {
         self.defaults = defaults
         self.reminderService = reminderService ?? ReminderService(defaults: defaults)
+        self.taskRepository = taskRepository ?? FileTaskRepository(defaults: defaults)
 
         loadTasks()
         loadPreferences()
@@ -83,6 +84,7 @@ final class ChecklistViewModel: ObservableObject {
         }
 
         tasks.append(StartupTask(title: title))
+        saveTasks()
         newTaskTitle = ""
     }
 
@@ -90,10 +92,12 @@ final class ChecklistViewModel: ObservableObject {
         for index in offsets.sorted(by: >) {
             tasks.remove(at: index)
         }
+        saveTasks()
     }
 
     func remove(task: StartupTask) {
         tasks.removeAll { $0.id == task.id }
+        saveTasks()
     }
 
     func moveTasks(fromOffsets offsets: IndexSet, toOffset destination: Int) {
@@ -106,6 +110,7 @@ final class ChecklistViewModel: ObservableObject {
 
         let insertionIndex = min(destination, tasks.count)
         tasks.insert(contentsOf: movingTasks, at: insertionIndex)
+        saveTasks()
     }
 
     func moveTask(withID taskID: UUID, beforeTaskWithID targetTaskID: UUID) {
@@ -120,11 +125,14 @@ final class ChecklistViewModel: ObservableObject {
         let task = tasks.remove(at: sourceIndex)
         let adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
         tasks.insert(task, at: adjustedTargetIndex)
+        saveTasks()
     }
 
     func toggleCompletion(for task: StartupTask) {
         guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
         tasks[index].isComplete.toggle()
+        tasks[index].updatedAt = .now
+        saveTasks()
     }
 
     func setLaunchAtLogin(_ isEnabled: Bool) {
@@ -187,14 +195,18 @@ final class ChecklistViewModel: ObservableObject {
     // MARK: - Persistence
 
     private func loadTasks() {
-        tasks = TaskStore.loadTasks(from: defaults)
+        do {
+            tasks = try taskRepository.loadTasks()
+        } catch {
+            tasks = []
+            print("Failed to load tasks: \(error.localizedDescription)")
+        }
     }
 
     private func saveTasks() {
         do {
-            try TaskStore.saveTasks(tasks, to: defaults, postChangeNotification: false)
+            try taskRepository.saveTasks(tasks, postChangeNotification: true)
         } catch {
-            // Nothing fancy for the MVP: failing to save just logs the issue.
             print("Failed to save tasks: \(error.localizedDescription)")
         }
     }
@@ -204,9 +216,17 @@ final class ChecklistViewModel: ObservableObject {
             forName: TaskStore.tasksDidChangeNotificationName,
             object: nil,
             queue: .main
-        ) { [weak self] _ in
+        ) { [weak self] notification in
+            guard let self else { return }
+            if
+                let sourceIdentifier = notification.userInfo?[TaskStore.changeSourceIdentifierUserInfoKey] as? String,
+                sourceIdentifier == self.taskRepository.changeSourceIdentifier
+            {
+                return
+            }
+
             Task { @MainActor in
-                self?.loadTasks()
+                self.loadTasks()
             }
         }
     }

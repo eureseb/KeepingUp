@@ -22,10 +22,15 @@ struct KeepingUpApp: App {
         if isUITesting,
            let defaults = UserDefaults(suiteName: "KeepingUpUITests") {
             defaults.removePersistentDomain(forName: "KeepingUpUITests")
-            if let emptyData = try? JSONEncoder().encode([StartupTask]()) {
-                defaults.set(emptyData, forKey: "startupTasks")
-            }
-            resolvedViewModel = ChecklistViewModel(defaults: defaults)
+            let uiTestStoreURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("KeepingUpUITests", isDirectory: true)
+                .appendingPathComponent("tasks.json", isDirectory: false)
+            try? FileManager.default.removeItem(at: uiTestStoreURL.deletingLastPathComponent())
+
+            resolvedViewModel = ChecklistViewModel(
+                defaults: defaults,
+                taskRepository: FileTaskRepository(defaults: defaults, storeURL: uiTestStoreURL)
+            )
         } else {
             resolvedViewModel = ChecklistViewModel()
         }

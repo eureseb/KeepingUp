@@ -45,11 +45,12 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         isExpanded = false
         currentTextSize = textSize
 
-        let message = popupMessage(for: tasksToShow)
+        let message = ReminderMessageBuilder.build(for: tasksToShow)
         let reminderView = ReminderPopupView(
             tasks: tasksToShow,
-            primaryMessage: message.primary,
-            secondaryMessage: message.secondary,
+            greeting: message.greeting,
+            primaryMessage: message.primaryMessage,
+            secondaryMessage: message.secondaryMessage,
             textSize: textSize,
             onDismiss: { [weak self] in
                 self?.dismiss(reason: "tap")
@@ -213,18 +214,6 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         }
     }
 
-    private func popupMessage(for tasks: [StartupTask]) -> (primary: String, secondary: String?) {
-        if tasks.count == 1, let task = tasks.first {
-            return ("Good morning. Start with: \(task.title)", nil)
-        }
-
-        if let firstTask = tasks.first {
-            return ("Good morning. Start with: \(firstTask.title)", "You have \(tasks.count) tasks today.")
-        }
-
-        return ("Good morning", "Open the menu bar when you're ready.")
-    }
-
     private func isDuplicateShowRequest() -> Bool {
         guard let lastShowDate else { return false }
         return Date().timeIntervalSince(lastShowDate) < 0.75
@@ -237,18 +226,15 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         let workItem = DispatchWorkItem { [weak self] in
             guard let self, let panel = self.panel else { return }
 
-            let sizeChanged: Bool
             if let lastAppliedPanelSize = self.lastAppliedPanelSize,
                abs(lastAppliedPanelSize.width - targetSize.width) < 1,
                abs(lastAppliedPanelSize.height - targetSize.height) < 1 {
                 return
-            } else {
-                sizeChanged = true
             }
 
             panel.setContentSize(targetSize)
             self.lastAppliedPanelSize = targetSize
-            if recenter && sizeChanged {
+            if recenter {
                 self.center(panel: panel)
             }
         }

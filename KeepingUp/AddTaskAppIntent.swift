@@ -24,7 +24,11 @@ struct AddTaskAppIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let newTask = try TaskStore.appendTask(title: taskTitle)
+        let newTask = try await MainActor.run {
+            let repository = FileTaskRepository()
+            return try repository.appendTask(title: taskTitle, postChangeNotification: true)
+        }
+
         return .result(dialog: IntentDialog("Added '\(newTask.title)'"))
     }
 }

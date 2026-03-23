@@ -91,6 +91,7 @@ Do not leave fallback logic that can cause both paths to run.
 On login, wake, or unlock, the app may show a gentle greeting or daily-focus reminder.
 
 Reminder behavior should feel helpful, not spammy.
+The copy should feel warm and concise rather than alarm-like.
 
 Rules:
 - reminders should not feel repetitive
@@ -119,6 +120,7 @@ It is not a mini app window and not a duplicate of the menu bar panel.
 The popup should:
 - feel like a calm macOS-style notification overlay
 - use a small app label, one primary message, and optional supporting text
+- use warm, human greeting copy that changes with time of day
 - show at most one highlighted task, or summarize if multiple tasks exist
 - avoid checklist rows, separators, and cloned app-panel UI
 - allow dismiss by clicking anywhere on it
@@ -213,6 +215,16 @@ Preserve existing app behavior unless a requested change explicitly replaces it.
 Future Codex sessions should read this file first and preserve the current UX and product direction.
 
 When business logic, behavior, or product direction changes, update this file in the same change set.
+
+Implement roadmap work in small, reviewable feature branches rather than broad rewrites.
+Prefer one roadmap slice per branch and MR.
+
+If UI is introduced ahead of full behavior, leave the unfinished controls clearly disabled or route them to an intentionally blank placeholder state.
+
+Default to TDD for new functionality:
+- add or update tests before changing behavior when practical
+- every feature branch should include automated coverage for the new behavior it introduces
+- a roadmap step is not complete until acceptance criteria and tests both pass
 
 Keep this file focused on:
 - real app behavior
