@@ -118,11 +118,10 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         panel.isMovableByWindowBackground = true
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = false
+        panel.hasShadow = true
         panel.delegate = self
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.wantsLayer = true
-        hostingView.layer?.masksToBounds = false
         panel.contentView = hostingView
         panel.setContentSize(targetPanelSize())
         lastAppliedPanelSize = targetPanelSize()
@@ -227,18 +226,15 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         let workItem = DispatchWorkItem { [weak self] in
             guard let self, let panel = self.panel else { return }
 
-            let sizeChanged: Bool
             if let lastAppliedPanelSize = self.lastAppliedPanelSize,
                abs(lastAppliedPanelSize.width - targetSize.width) < 1,
                abs(lastAppliedPanelSize.height - targetSize.height) < 1 {
                 return
-            } else {
-                sizeChanged = true
             }
 
             panel.setContentSize(targetSize)
             self.lastAppliedPanelSize = targetSize
-            if recenter && sizeChanged {
+            if recenter {
                 self.center(panel: panel)
             }
         }

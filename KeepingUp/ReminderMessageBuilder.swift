@@ -38,11 +38,12 @@ enum ReminderMessageBuilder {
         }
 
         if incompleteTasks.count == 1, let task = incompleteTasks.first {
+            let previewTitle = previewTitle(for: task.title)
             return ReminderMessage(
                 greeting: greeting,
-                primaryMessage: "Start with \(task.title) when you're ready.",
+                primaryMessage: "Start with \(previewTitle) when you're ready.",
                 secondaryMessage: "That's the only open task waiting for you.",
-                notificationBody: "\(greeting). Start with \(task.title) when you're ready."
+                notificationBody: "\(greeting). Start with \(previewTitle) when you're ready."
             )
         }
 
@@ -65,9 +66,9 @@ enum ReminderMessageBuilder {
 
         return ReminderMessage(
             greeting: greeting,
-            primaryMessage: "Start with \(firstTask.title).",
+            primaryMessage: "Start with \(previewTitle(for: firstTask.title)).",
             secondaryMessage: secondaryMessage,
-            notificationBody: "\(greeting). Start with \(firstTask.title). \(secondaryMessage)"
+            notificationBody: "\(greeting). Start with \(previewTitle(for: firstTask.title)). \(secondaryMessage)"
         )
     }
 
@@ -82,5 +83,18 @@ enum ReminderMessageBuilder {
         default:
             return "Good evening"
         }
+    }
+
+    private static func previewTitle(for title: String, limit: Int = 80) -> String {
+        let collapsedWhitespaceTitle = title
+            .components(separatedBy: .newlines)
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard collapsedWhitespaceTitle.count > limit else {
+            return collapsedWhitespaceTitle
+        }
+
+        return String(collapsedWhitespaceTitle.prefix(limit - 1)) + "…"
     }
 }

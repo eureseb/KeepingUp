@@ -77,7 +77,6 @@ struct ReminderPopupView: View {
                                 .font(.caption2)
                                 .foregroundStyle(secondaryTextColor)
                                 .padding(.top, 2)
-                                .rotationEffect(.degrees(isExpanded ? 0 : 0))
                         }
                     }
                     .buttonStyle(.plain)
@@ -121,7 +120,6 @@ struct ReminderPopupView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.12), radius: 12, y: 5)
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .onTapGesture {
             onDismiss()
