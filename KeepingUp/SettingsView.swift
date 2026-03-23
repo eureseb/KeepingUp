@@ -30,6 +30,31 @@ struct SettingsView: View {
                     ))
                 }
 
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Deadline Alerts")
+                        .font(.headline)
+
+                    Toggle("Notify me when a task is almost due", isOn: Binding(
+                        get: { viewModel.dueAlertsEnabled },
+                        set: { viewModel.setDueAlertsEnabled($0) }
+                    ))
+
+                    Text("Due alerts use standard macOS notifications even if startup reminders use the in-app popup.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Task Cleanup")
+                        .font(.headline)
+
+                    Toggle("Auto-delete completed tasks (after 24 hours)", isOn: $viewModel.autoDeleteCompletedEnabled)
+
+                    Text("Cleanup runs once per day on launch and when the app becomes active.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Reminder Style")
                         .font(.headline)
@@ -75,9 +100,15 @@ struct SettingsView: View {
                 }
 
                 if viewModel.notificationPermissionDenied {
-                    Text("Notifications are currently denied in System Settings.")
-                        .font(.caption)
-                        .foregroundStyle(.red)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Notifications are currently denied in System Settings.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+
+                        Button("Open macOS Notification Settings") {
+                            openNotificationSettings()
+                        }
+                    }
                 }
 
                 Divider()

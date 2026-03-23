@@ -7,10 +7,58 @@
 
 import Foundation
 
-enum TaskPriority: String, Codable, CaseIterable, Equatable {
+enum TaskPriority: String, Codable, CaseIterable, Equatable, Identifiable {
     case low
-    case normal
+    case medium
     case high
+
+    var id: String { rawValue }
+
+    nonisolated var title: String {
+        switch self {
+        case .low:
+            return "Low"
+        case .medium:
+            return "Medium"
+        case .high:
+            return "High"
+        }
+    }
+
+    nonisolated var sortOrder: Int {
+        switch self {
+        case .high:
+            return 0
+        case .medium:
+            return 1
+        case .low:
+            return 2
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+
+        switch rawValue {
+        case Self.low.rawValue:
+            self = .low
+        case Self.medium.rawValue, "normal":
+            self = .medium
+        case Self.high.rawValue:
+            self = .high
+        default:
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Unknown task priority value: \(rawValue)"
+            )
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 struct TaskParserMetadata: Codable, Equatable {
@@ -39,6 +87,11 @@ struct StartupTask: Identifiable, Codable, Equatable {
     var updatedAt: Date
     var dueDate: Date?
     var priority: TaskPriority
+    var isPinned: Bool
+    var pinnedOrder: Int?
+    var manualOrderGroupID: String?
+    var manualOrder: Int?
+    var hasExplicitDueTime: Bool
     var parserMetadata: TaskParserMetadata?
 
     init(
@@ -48,7 +101,12 @@ struct StartupTask: Identifiable, Codable, Equatable {
         createdAt: Date = .now,
         updatedAt: Date? = nil,
         dueDate: Date? = nil,
-        priority: TaskPriority = .normal,
+        priority: TaskPriority = .medium,
+        isPinned: Bool = false,
+        pinnedOrder: Int? = nil,
+        manualOrderGroupID: String? = nil,
+        manualOrder: Int? = nil,
+        hasExplicitDueTime: Bool = false,
         parserMetadata: TaskParserMetadata? = nil
     ) {
         self.id = id
@@ -58,6 +116,11 @@ struct StartupTask: Identifiable, Codable, Equatable {
         self.updatedAt = updatedAt ?? createdAt
         self.dueDate = dueDate
         self.priority = priority
+        self.isPinned = isPinned
+        self.pinnedOrder = pinnedOrder
+        self.manualOrderGroupID = manualOrderGroupID
+        self.manualOrder = manualOrder
+        self.hasExplicitDueTime = hasExplicitDueTime
         self.parserMetadata = parserMetadata
     }
 
@@ -69,6 +132,11 @@ struct StartupTask: Identifiable, Codable, Equatable {
         case updatedAt
         case dueDate
         case priority
+        case isPinned
+        case pinnedOrder
+        case manualOrderGroupID
+        case manualOrder
+        case hasExplicitDueTime
         case parserMetadata
     }
 
@@ -80,7 +148,12 @@ struct StartupTask: Identifiable, Codable, Equatable {
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
         dueDate = try container.decodeIfPresent(Date.self, forKey: .dueDate)
-        priority = try container.decodeIfPresent(TaskPriority.self, forKey: .priority) ?? .normal
+        priority = try container.decodeIfPresent(TaskPriority.self, forKey: .priority) ?? .medium
+        isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
+        pinnedOrder = try container.decodeIfPresent(Int.self, forKey: .pinnedOrder)
+        manualOrderGroupID = try container.decodeIfPresent(String.self, forKey: .manualOrderGroupID)
+        manualOrder = try container.decodeIfPresent(Int.self, forKey: .manualOrder)
+        hasExplicitDueTime = try container.decodeIfPresent(Bool.self, forKey: .hasExplicitDueTime) ?? false
         parserMetadata = try container.decodeIfPresent(TaskParserMetadata.self, forKey: .parserMetadata)
     }
 

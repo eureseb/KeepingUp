@@ -32,7 +32,7 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
 
     func show(tasks: [StartupTask], autoDismissSeconds: Int, textSize: NotificationTextSize) {
         debugLog("popup show requested")
-        let visibleTasks = tasks.filter { !$0.isComplete }
+        let visibleTasks = TaskScheduling.reminderOrderedIncompleteTasks(from: tasks)
         let tasksToShow = visibleTasks.isEmpty ? tasks : visibleTasks
 
         guard !tasksToShow.isEmpty else {
@@ -94,7 +94,9 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         guard let panel else { return }
         debugLog("popup closed: \(reason)")
         animateOut(panel: panel) {
-            panel.orderOut(nil)
+            MainActor.assumeIsolated {
+                panel.orderOut(nil)
+            }
         }
     }
 
@@ -155,7 +157,7 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         }
 
         let timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(seconds), repeats: false) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 guard let self else { return }
                 self.debugLog("timer fired")
                 self.dismiss(reason: "auto-dismiss")
@@ -267,7 +269,7 @@ final class ReminderPopupController: NSObject, NSWindowDelegate {
         }
     }
 
-    private func animateOut(panel: NSPanel, completion: @escaping () -> Void) {
+    private func animateOut(panel: NSPanel, completion: @escaping @Sendable () -> Void) {
         NSAnimationContext.runAnimationGroup(
             { context in
                 context.duration = 0.16
