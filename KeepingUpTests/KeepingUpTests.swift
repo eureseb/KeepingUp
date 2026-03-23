@@ -28,6 +28,20 @@ struct KeepingUpTests {
         #expect(viewModel.tasks.first?.title == "Brew coffee")
     }
 
+
+    @Test func freshLaunchStartsWithNoTasks() throws {
+        let suiteName = "ChecklistViewModelEmptyStateTests"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            Issue.record("Unable to create UserDefaults suite")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let viewModel = ChecklistViewModel(defaults: defaults)
+
+        #expect(viewModel.tasks.isEmpty)
+    }
+
     @Test func tasksPersistBetweenLaunches() throws {
         let suiteName = "ChecklistViewModelPersistenceTests"
         guard let defaults = UserDefaults(suiteName: suiteName) else {

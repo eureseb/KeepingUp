@@ -24,13 +24,13 @@ enum TaskStore {
 
     static func loadTasks(from defaults: UserDefaults = .standard) -> [StartupTask] {
         guard let data = defaults.data(forKey: tasksStorageKey) else {
-            return StartupTask.sampleData
+            return []
         }
 
         do {
             return try JSONDecoder().decode([StartupTask].self, from: data)
         } catch {
-            return StartupTask.sampleData
+            return []
         }
     }
 
