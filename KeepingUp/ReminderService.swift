@@ -61,6 +61,15 @@ enum ReminderReason {
     case screenUnlocked
     case developerTest
 
+    var shouldTriggerStartupReminder: Bool {
+        switch self {
+        case .appDidBecomeActive:
+            return false
+        case .appLaunch, .sessionBecameActive, .wokeFromSleep, .screenUnlocked, .developerTest:
+            return true
+        }
+    }
+
     var identifier: String {
         switch self {
         case .appLaunch:
@@ -145,6 +154,11 @@ final class ReminderService {
 
     func deliverReminder(for tasks: [StartupTask], reason: ReminderReason, bypassCooldown: Bool = false) async {
         debugLog("Popup evaluation started for \(reason.debugName)")
+
+        guard reason.shouldTriggerStartupReminder else {
+            debugLog("Popup skipped: reason \(reason.debugName) is not an active reminder trigger")
+            return
+        }
 
         guard !tasks.isEmpty else {
             debugLog("Popup skipped: task list is empty")

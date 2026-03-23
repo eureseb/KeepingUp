@@ -45,11 +45,24 @@ Do not turn it into a settings surface.
 
 The menu bar popover should emphasize today’s tasks or the most relevant near-term tasks.
 
+The popover should open in `Today` every time.
+
+The compact filter model is:
+- default `Today` scope for overdue and due-today work
+- one `Upcoming` quick chip that toggles between `Today` and `Upcoming`
+- a separate `Focus` mode toggle that is only available while `Today` is active
+
+Pinned tasks stay visible regardless of the current filter.
+Unplanned tasks without deadlines stay accessible as a separate group instead of disappearing behind the current filter.
+
 The compact task UI should stay simple:
 - clear task visibility
 - quick completion toggles
 - lightweight task creation
 - minimal destructive controls
+
+Manual ordering should use the explicit reorder mode controls.
+Do not reintroduce drag-and-drop reordering unless the product direction changes.
 
 Task colors and status indicators should stay clear but not noisy.
 
@@ -63,6 +76,7 @@ Settings are a separate app surface for configuration and app-level actions.
 
 Settings currently contain or may contain:
 - launch at login
+- due alerts
 - reminder enablement
 - reminder presentation style
 - developer-mode reminder controls
@@ -112,6 +126,27 @@ When changing reminder behavior, keep these concerns aligned:
 - task availability
 - permission state for system notifications
 
+When multiple open tasks exist, the greeting should mention the first incomplete task from the current reminder ordering.
+Pinned tasks affect popover display order, but they do not override reminder selection.
+
+Display ordering and reminder ordering are intentionally not identical:
+- popover browse sections use section-local manual ordering where supported
+- reminder selection follows the shared today-relevant reminder ordering
+
+Urgency ranking is:
+- overdue
+- near due
+- future dated
+- no deadline
+- then priority `high > medium > low`
+- then earlier deadline
+- then older creation time
+
+Near-due rules are:
+- exact-time deadlines: within 1 hour of the due time
+- date-only deadlines: the due day itself
+- date-only deadlines become overdue on the next local day
+
 ## Custom Popup Rules
 
 The custom center popup is a lightweight transient notification.
@@ -140,6 +175,16 @@ Do not try to force banner persistence in code.
 Banner vs alert behavior is controlled by the user’s macOS notification settings.
 
 If needed, provide a helper button that opens macOS Notification Settings rather than trying to override system behavior.
+
+Deadline alerts use standard macOS notifications only.
+They are a separate setting from login/unlock reminders.
+They should fire once per deadline as an early warning, not as repeated nags.
+Do not show catch-up due alerts for tasks that are already overdue when the app notices them.
+
+Completed-task cleanup is a separate setting:
+- auto-delete completed tasks is optional and off by default
+- cleanup removes completed tasks older than 24 hours
+- cleanup should run quietly during daily maintenance
 
 ## Task Creation and Shortcuts
 
@@ -196,6 +241,18 @@ Do not force precise clicks for transient UI when a broader dismiss behavior is 
 Do not add extra controls unless they clearly improve speed or clarity.
 
 Every quick surface should be understandable within a few seconds.
+
+The menu bar icon may change state for urgency:
+- normal when nothing is urgent
+- warning when a task is near due
+- stronger alert when a task is overdue
+
+Overdue state should win over near-due state.
+
+Lightweight in-popover feedback is valid for task actions:
+- added-task confirmation can use a subtle transient toast
+- single-task completion can use a brief success animation
+- finishing the last incomplete task can show a short celebration toast
 
 ## Implementation Guardrails
 

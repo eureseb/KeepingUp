@@ -17,7 +17,7 @@ struct ReminderMessage {
 enum ReminderMessageBuilder {
     static func build(for tasks: [StartupTask], now: Date = .now) -> ReminderMessage {
         let greeting = greetingText(for: now)
-        let incompleteTasks = tasks.filter { !$0.isComplete }
+        let incompleteTasks = TaskScheduling.reminderOrderedIncompleteTasks(from: tasks, now: now)
 
         guard !tasks.isEmpty else {
             return ReminderMessage(

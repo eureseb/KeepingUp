@@ -11,7 +11,7 @@ import AppIntents
 
 @main
 struct KeepingUpApp: App {
-    private let viewModel: ChecklistViewModel
+    @StateObject private var viewModel: ChecklistViewModel
     private let lifecycleObserver: AppLifecycleObserver
     private let isUITesting: Bool
 
@@ -35,7 +35,7 @@ struct KeepingUpApp: App {
             resolvedViewModel = ChecklistViewModel()
         }
 
-        viewModel = resolvedViewModel
+        _viewModel = StateObject(wrappedValue: resolvedViewModel)
         KeepingUpAppShortcuts.updateAppShortcutParameters()
         lifecycleObserver = AppLifecycleObserver { reason in
             Task { @MainActor in
@@ -46,8 +46,11 @@ struct KeepingUpApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("KeepingUp", systemImage: "checklist") {
+        MenuBarExtra {
             ContentView(viewModel: viewModel)
+        } label: {
+            Image(systemName: viewModel.menuBarIconName)
+                .accessibilityLabel(viewModel.menuBarAccessibilityLabel)
         }
         .menuBarExtraStyle(.window)
 

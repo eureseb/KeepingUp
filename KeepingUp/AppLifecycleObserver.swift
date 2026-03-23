@@ -11,12 +11,10 @@ import Foundation
 @MainActor
 final class AppLifecycleObserver {
     private let workspaceNotificationCenter = NSWorkspace.shared.notificationCenter
-    private let appNotificationCenter = NotificationCenter.default
     private let distributedNotificationCenter = DistributedNotificationCenter.default()
     private let onReminderEvent: (ReminderReason) -> Void
 
     private var workspaceObservers: [NSObjectProtocol] = []
-    private var appObservers: [NSObjectProtocol] = []
     private var distributedObservers: [NSObjectProtocol] = []
     private var hasRegisteredObservers = false
 
@@ -39,9 +37,10 @@ final class AppLifecycleObserver {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.debugLog("sessionDidBecomeActive fired")
-                    self?.onReminderEvent(.sessionBecameActive)
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.debugLog("sessionDidBecomeActive fired")
+                    self.onReminderEvent(.sessionBecameActive)
                 }
             },
             workspaceNotificationCenter.addObserver(
@@ -49,22 +48,10 @@ final class AppLifecycleObserver {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.debugLog("didWake fired")
-                    self?.onReminderEvent(.wokeFromSleep)
-                }
-            }
-        ]
-
-        appObservers = [
-            appNotificationCenter.addObserver(
-                forName: NSApplication.didBecomeActiveNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.debugLog("app didBecomeActive fired")
-                    self?.onReminderEvent(.appDidBecomeActive)
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.debugLog("didWake fired")
+                    self.onReminderEvent(.wokeFromSleep)
                 }
             }
         ]
@@ -75,9 +62,10 @@ final class AppLifecycleObserver {
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
-                Task { @MainActor in
-                    self?.debugLog("distributed screen unlock fired")
-                    self?.onReminderEvent(.screenUnlocked)
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.debugLog("distributed screen unlock fired")
+                    self.onReminderEvent(.screenUnlocked)
                 }
             }
         ]
@@ -91,11 +79,6 @@ final class AppLifecycleObserver {
         for observer in workspaceObservers {
             workspaceNotificationCenter.removeObserver(observer)
         }
-
-        for observer in appObservers {
-            appNotificationCenter.removeObserver(observer)
-        }
-
         for observer in distributedObservers {
             distributedNotificationCenter.removeObserver(observer)
         }
