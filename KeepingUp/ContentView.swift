@@ -7,11 +7,13 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import AppKit
 
 struct ContentView: View {
     /// The shared view model is created once in the app entry point and reused here.
     @ObservedObject var viewModel: ChecklistViewModel
     @State private var draggedTaskID: UUID?
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -26,7 +28,10 @@ struct ContentView: View {
 
                 Spacer()
 
-                SettingsLink {
+                Button {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openSettings()
+                } label: {
                     Image(systemName: "gearshape")
                         .font(.body)
                 }

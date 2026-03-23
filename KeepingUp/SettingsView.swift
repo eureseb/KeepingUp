@@ -149,9 +149,7 @@ private struct SettingsWindowConfigurator: NSViewRepresentable {
         let view = NSView()
 
         DispatchQueue.main.async {
-            guard let window = view.window else { return }
-            window.styleMask.insert(.resizable)
-            window.minSize = NSSize(width: 320, height: 320)
+            configure(window: view.window)
         }
 
         return view
@@ -159,9 +157,20 @@ private struct SettingsWindowConfigurator: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {
         DispatchQueue.main.async {
-            guard let window = nsView.window else { return }
-            window.styleMask.insert(.resizable)
-            window.minSize = NSSize(width: 320, height: 320)
+            configure(window: nsView.window)
         }
+    }
+
+    private func configure(window: NSWindow?) {
+        guard let window else { return }
+        window.styleMask.insert(.resizable)
+        window.minSize = NSSize(width: 320, height: 320)
+
+        // Opening Settings is an intentional foreground action, so make sure the
+        // window becomes key and is not left behind other active windows.
+        NSApp.activate(ignoringOtherApps: true)
+        window.level = .normal
+        window.orderFrontRegardless()
+        window.makeKeyAndOrderFront(nil)
     }
 }
